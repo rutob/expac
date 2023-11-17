@@ -114,10 +114,20 @@ function createBombs () {
                 . . . . . . . . . . . . . . . . 
                 `, SpriteKind.Projectile)
             mySprite.setPosition(30 + valueX, 25 + valueY)
+            sprites.setDataBoolean(mySprite, "visible", false)
             listBombCol.unshift(mySprite)
         }
         listBombSet.push(listBombCol)
     }
+}
+function updateBombCol (col: number) {
+    listSpriteCol = listBombSet[col]
+    for (let index = 0; index <= listSpriteCol.length - 2; index++) {
+        sprites.setDataBoolean(listSpriteCol[index], "visible", sprites.readDataBoolean(listSpriteCol[index + 1], "visible"))
+        listSpriteCol[index].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[index], "visible")))
+    }
+    sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", false)
+    listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, true)
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (playerLocation < listCars.length - 1) {
@@ -138,12 +148,13 @@ function setAllSpritesVisible (visible: boolean) {
     }
 }
 let listBombCol: Sprite[] = []
-let listBombSet: Sprite[][] = []
 let listY: number[] = []
 let listX: number[] = []
 let listPlanes: Sprite[] = []
 let mySprite: Sprite = null
 let list: number[] = []
+let listBombSet: Sprite[][] = []
+let listSpriteCol: Sprite[] = []
 let listCars: Sprite[] = []
 let playerLocation = 0
 scene.setBackgroundImage(img`
@@ -275,6 +286,9 @@ createPlanes()
 createBombs()
 setAllSpritesVisible(false)
 listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+listSpriteCol = listBombSet[0]
+sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", true)
+listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible")))
 game.onUpdateInterval(200, function () {
     if (planeLocation > listPlanes.length) {
         planeLocation += -1
@@ -289,4 +303,5 @@ game.onUpdateInterval(200, function () {
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
         planeLocation = randint(30, 60)
     }
+    updateBombCol(0)
 })
