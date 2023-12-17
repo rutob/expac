@@ -1,3 +1,8 @@
+function updateBombSet () {
+    for (let index = 0; index <= listBombSet.length - 1; index++) {
+        updateBombCol(index)
+    }
+}
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     setAllSpritesVisible(false)
 })
@@ -145,6 +150,13 @@ function setAllSpritesVisible (visible: boolean) {
     }
     for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
         value.setFlag(SpriteFlag.Invisible, !(visible))
+    }
+}
+function maybeDropBomb (col: number) {
+    listSpriteCol = listBombSet[col]
+    if (Math.percentChance(70)) {
+        sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", true)
+        listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, false)
     }
 }
 let listBombCol: Sprite[] = []
@@ -299,9 +311,12 @@ game.onUpdateInterval(200, function () {
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
         planeLocation += -1
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
+        if (planeLocation > 0 && planeLocation < 5) {
+            maybeDropBomb(planeLocation - 1)
+        }
     } else {
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
         planeLocation = randint(30, 60)
     }
-    updateBombCol(0)
+    updateBombSet()
 })
