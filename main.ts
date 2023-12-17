@@ -1,3 +1,6 @@
+namespace SpriteKind {
+    export const Util = SpriteKind.create()
+}
 function updateBombSet () {
     for (let index = 0; index <= listBombSet.length - 1; index++) {
         updateBombCol(index)
@@ -13,7 +16,7 @@ function createCars () {
     60,
     85,
     110,
-    135
+    149
     ]
     listCars = []
     for (let value of list) {
@@ -38,15 +41,74 @@ function createCars () {
         mySprite.setPosition(value, 94)
         listCars.push(mySprite)
     }
+    listUtil = []
+    mySprite = sprites.create(img`
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . . . . . . . . . . . . . 
+        . . . . c c c c c c c c . . . . 
+        . . c c b b 3 b 3 3 b b c c . . 
+        . c 3 3 b 3 3 b 3 3 3 b 3 3 c . 
+        c d d b 3 3 b 3 3 b 3 3 b d d c 
+        f c c c d d c d d c d d c c c f 
+        f b 3 c c c b c c b c c c 3 b f 
+        . c b b 3 3 b 3 3 b 3 3 b b c . 
+        . . f f f f f f f f f f f f . . 
+        `, SpriteKind.Util)
+    mySprite.setPosition(126, 99)
+    listUtil.push(mySprite)
+    mySprite = sprites.create(img`
+        . . . . . . . . . . . c f f . . 
+        . . . . . . . . . . c d c b c . 
+        . . . . . . . . . c 3 d c 3 b f 
+        . . . . . . . . . c 3 b c c b f 
+        . . . . . . . . c b b 3 d c 3 f 
+        . . . . . . . . c b 3 3 d c 3 f 
+        . . . . . . . . c 3 3 b c b b f 
+        . . . . . . . . c 3 3 3 d c 3 f 
+        . . . . . . . . c b b 3 d c 3 f 
+        . . . . . . . . c 3 3 b c b b f 
+        . . . . . . . . c b 3 3 d c 3 f 
+        . . . . . . . . c b b 3 d c 3 f 
+        . . . . . . . . . c 3 b c c b f 
+        . . . . . . . . . c 3 d c 3 b f 
+        . . . . . . . . . . c d c b c . 
+        . . . . . . . . . . . c f f . . 
+        `, SpriteKind.Util)
+    mySprite.setPosition(132, 96)
+    listUtil.push(mySprite)
 }
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     setAllSpritesVisible(true)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (playerLocation > 0) {
+    if (gameState == "playing" && playerLocation > 0) {
         listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
         playerLocation += -1
         listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+    }
+})
+info.onCountdownEnd(function () {
+    if (gameState == "exploding") {
+        info.changeLifeBy(-1)
+        gameState = "playing"
+        listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
+        listExplosion[playerLocation - 1].setFlag(SpriteFlag.Invisible, true)
+        playerLocation = 0
+        listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+    } else if (gameState == "scoring") {
+        gameState = "playing"
+        listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
+        playerLocation = 0
+        listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+        info.changeScoreBy(100)
+    } else {
+    	
     }
 })
 function createPlanes () {
@@ -97,6 +159,7 @@ function createBombs () {
     52
     ]
     listBombSet = []
+    listExplosion = []
     for (let valueX of listX) {
         listBombCol = []
         for (let valueY of listY) {
@@ -123,10 +186,24 @@ function createBombs () {
             listBombCol.unshift(mySprite)
         }
         listBombSet.push(listBombCol)
+        mySprite = sprites.create(img`
+            . . 3 3 . . . 3 3 . . . . . . . 
+            . 3 1 1 2 . . 3 1 3 . . 3 3 3 . 
+            . 3 1 1 2 . . 3 1 3 . 3 1 1 3 . 
+            . . 3 2 2 . . 2 1 2 . 2 1 1 3 . 
+            . 3 3 . . . . . 2 2 . 2 2 2 . . 
+            `, SpriteKind.Projectile)
+        mySprite.setPosition(26 + valueX, 25 + 58)
+        listExplosion.push(mySprite)
     }
 }
 function updateBombCol (col: number) {
     listSpriteCol = listBombSet[col]
+    if (playerLocation == col + 1 && sprites.readDataBoolean(listSpriteCol[0], "visible")) {
+        listExplosion[col].setFlag(SpriteFlag.Invisible, false)
+        gameState = "exploding"
+        info.startCountdown(2)
+    }
     for (let index = 0; index <= listSpriteCol.length - 2; index++) {
         sprites.setDataBoolean(listSpriteCol[index], "visible", sprites.readDataBoolean(listSpriteCol[index + 1], "visible"))
         listSpriteCol[index].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[index], "visible")))
@@ -135,10 +212,17 @@ function updateBombCol (col: number) {
     listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, true)
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (playerLocation < listCars.length - 1) {
-        listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
-        playerLocation += 1
-        listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+    if (gameState == "playing") {
+        if (playerLocation < listCars.length - 1) {
+            listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
+            playerLocation += 1
+            listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+            if (playerLocation == listCars.length - 1) {
+                gameState = "scoring"
+                listCars[playerLocation].startEffect(effects.blizzard, 1000)
+                info.startCountdown(1)
+            }
+        }
     }
 })
 function setAllSpritesVisible (visible: boolean) {
@@ -152,6 +236,9 @@ function setAllSpritesVisible (visible: boolean) {
         value.setFlag(SpriteFlag.Invisible, !(visible))
     }
 }
+info.onLifeZero(function () {
+    game.gameOver(false)
+})
 function maybeDropBomb (col: number) {
     listSpriteCol = listBombSet[col]
     if (Math.percentChance(70)) {
@@ -163,11 +250,14 @@ let listBombCol: Sprite[] = []
 let listY: number[] = []
 let listX: number[] = []
 let listPlanes: Sprite[] = []
+let listExplosion: Sprite[] = []
+let listUtil: Sprite[] = []
 let mySprite: Sprite = null
 let list: number[] = []
 let listBombSet: Sprite[][] = []
 let listSpriteCol: Sprite[] = []
 let listCars: Sprite[] = []
+let gameState = ""
 let playerLocation = 0
 scene.setBackgroundImage(img`
     9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
@@ -297,6 +387,7 @@ createCars()
 createPlanes()
 createBombs()
 setAllSpritesVisible(false)
+gameState = "playing"
 listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
 listSpriteCol = listBombSet[0]
 sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", true)
