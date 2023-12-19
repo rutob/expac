@@ -111,6 +111,20 @@ info.onCountdownEnd(function () {
     	
     }
 })
+function updateUtils () {
+    bridgeCounter += -1
+    if (bridgeCounter < 0) {
+        bridgeCounter = randint(20, 80)
+        isBridgeAvailable = !(isBridgeAvailable)
+        if (isBridgeAvailable) {
+            listUtil[0].setFlag(SpriteFlag.Invisible, false)
+            listUtil[1].setFlag(SpriteFlag.Invisible, true)
+        } else {
+            listUtil[0].setFlag(SpriteFlag.Invisible, true)
+            listUtil[1].setFlag(SpriteFlag.Invisible, false)
+        }
+    }
+}
 function createPlanes () {
     list = [
     10,
@@ -198,6 +212,7 @@ function createBombs () {
     }
 }
 function updateBombCol (col: number) {
+    bombCounter = 0
     listSpriteCol = listBombSet[col]
     if (playerLocation == col + 1 && sprites.readDataBoolean(listSpriteCol[0], "visible")) {
         listExplosion[col].setFlag(SpriteFlag.Invisible, false)
@@ -207,9 +222,15 @@ function updateBombCol (col: number) {
     for (let index = 0; index <= listSpriteCol.length - 2; index++) {
         sprites.setDataBoolean(listSpriteCol[index], "visible", sprites.readDataBoolean(listSpriteCol[index + 1], "visible"))
         listSpriteCol[index].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[index], "visible")))
+        if (sprites.readDataBoolean(listSpriteCol[index], "visible")) {
+            bombCounter += 1
+        }
     }
     sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", false)
     listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, true)
+    if (bombCounter > 0) {
+        music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
+    }
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (gameState == "playing") {
@@ -218,13 +239,37 @@ controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
             playerLocation += 1
             listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
             if (playerLocation == listCars.length - 1) {
-                gameState = "scoring"
-                listCars[playerLocation].startEffect(effects.blizzard, 1000)
-                info.startCountdown(1)
+                if (isBridgeAvailable) {
+                    music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+                    gameState = "scoring"
+                    listCars[playerLocation].startEffect(effects.blizzard, 1000)
+                    info.startCountdown(1)
+                } else {
+                    music.play(music.melodyPlayable(music.knock), music.PlaybackMode.InBackground)
+                }
             }
         }
     }
 })
+function updatePlane () {
+    if (planeLocation > listPlanes.length) {
+        planeLocation += -1
+    } else if (planeLocation == listPlanes.length) {
+        music.play(music.melodyPlayable(music.sonar), music.PlaybackMode.InBackground)
+        planeLocation += -1
+        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
+    } else if (planeLocation > 0) {
+        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
+        planeLocation += -1
+        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
+        if (planeLocation > 0 && planeLocation < 5) {
+            maybeDropBomb(planeLocation - 1)
+        }
+    } else {
+        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
+        planeLocation = randint(30, 60)
+    }
+}
 function setAllSpritesVisible (visible: boolean) {
     for (let value of sprites.allOfKind(SpriteKind.Player)) {
         value.setFlag(SpriteFlag.Invisible, !(visible))
@@ -233,6 +278,9 @@ function setAllSpritesVisible (visible: boolean) {
         value.setFlag(SpriteFlag.Invisible, !(visible))
     }
     for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
+        value.setFlag(SpriteFlag.Invisible, !(visible))
+    }
+    for (let value of sprites.allOfKind(SpriteKind.Util)) {
         value.setFlag(SpriteFlag.Invisible, !(visible))
     }
 }
@@ -246,18 +294,22 @@ function maybeDropBomb (col: number) {
         listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, false)
     }
 }
+let bombCounter = 0
 let listBombCol: Sprite[] = []
 let listY: number[] = []
 let listX: number[] = []
 let listPlanes: Sprite[] = []
 let listExplosion: Sprite[] = []
-let listUtil: Sprite[] = []
 let mySprite: Sprite = null
 let list: number[] = []
 let listBombSet: Sprite[][] = []
 let listSpriteCol: Sprite[] = []
+let listUtil: Sprite[] = []
 let listCars: Sprite[] = []
 let gameState = ""
+let bridgeCounter = 0
+let isBridgeAvailable = false
+let planeLocation = 0
 let playerLocation = 0
 scene.setBackgroundImage(img`
     9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
@@ -382,32 +434,21 @@ scene.setBackgroundImage(img`
     7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
     `)
 playerLocation = 0
-let planeLocation = randint(30, 60)
+planeLocation = randint(30, 60)
+isBridgeAvailable = false
+bridgeCounter = randint(20, 80)
 createCars()
 createPlanes()
 createBombs()
 setAllSpritesVisible(false)
 gameState = "playing"
 listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+listUtil[1].setFlag(SpriteFlag.Invisible, false)
 listSpriteCol = listBombSet[0]
 sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", true)
 listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible")))
 game.onUpdateInterval(200, function () {
-    if (planeLocation > listPlanes.length) {
-        planeLocation += -1
-    } else if (planeLocation == listPlanes.length) {
-        planeLocation += -1
-        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
-    } else if (planeLocation > 0) {
-        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
-        planeLocation += -1
-        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
-        if (planeLocation > 0 && planeLocation < 5) {
-            maybeDropBomb(planeLocation - 1)
-        }
-    } else {
-        listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
-        planeLocation = randint(30, 60)
-    }
+    updatePlane()
     updateBombSet()
+    updateUtils()
 })
