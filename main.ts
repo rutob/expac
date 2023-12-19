@@ -217,6 +217,7 @@ function updateBombCol (col: number) {
     if (playerLocation == col + 1 && sprites.readDataBoolean(listSpriteCol[0], "visible")) {
         listExplosion[col].setFlag(SpriteFlag.Invisible, false)
         gameState = "exploding"
+        music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
         info.startCountdown(2)
     }
     for (let index = 0; index <= listSpriteCol.length - 2; index++) {
@@ -234,19 +235,21 @@ function updateBombCol (col: number) {
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (gameState == "playing") {
-        if (playerLocation < listCars.length - 1) {
+        if (playerLocation < listCars.length - 2) {
             listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
             playerLocation += 1
             listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
-            if (playerLocation == listCars.length - 1) {
-                if (isBridgeAvailable) {
-                    music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
-                    gameState = "scoring"
-                    listCars[playerLocation].startEffect(effects.blizzard, 1000)
-                    info.startCountdown(1)
-                } else {
-                    music.play(music.melodyPlayable(music.knock), music.PlaybackMode.InBackground)
-                }
+        } else if (playerLocation == listCars.length - 2) {
+            if (isBridgeAvailable) {
+                listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
+                playerLocation += 1
+                listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
+                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+                gameState = "scoring"
+                listCars[playerLocation].startEffect(effects.blizzard, 1000)
+                info.startCountdown(1)
+            } else {
+                music.play(music.melodyPlayable(music.knock), music.PlaybackMode.InBackground)
             }
         }
     }
