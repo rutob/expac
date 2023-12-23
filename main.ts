@@ -2,8 +2,12 @@ namespace SpriteKind {
     export const Util = SpriteKind.create()
 }
 function updateBombSet () {
+    bombCounter = 0
     for (let index = 0; index <= listBombSet.length - 1; index++) {
         updateBombCol(index)
+    }
+    if (bombCounter > 0) {
+        music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
     }
 }
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -212,7 +216,6 @@ function createBombs () {
     }
 }
 function updateBombCol (col: number) {
-    bombCounter = 0
     listSpriteCol = listBombSet[col]
     if (playerLocation == col + 1 && sprites.readDataBoolean(listSpriteCol[0], "visible")) {
         listExplosion[col].setFlag(SpriteFlag.Invisible, false)
@@ -229,9 +232,6 @@ function updateBombCol (col: number) {
     }
     sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", false)
     listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, true)
-    if (bombCounter > 0) {
-        music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
-    }
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (gameState == "playing") {
@@ -258,9 +258,9 @@ function updatePlane () {
     if (planeLocation > listPlanes.length) {
         planeLocation += -1
     } else if (planeLocation == listPlanes.length) {
-        music.play(music.melodyPlayable(music.sonar), music.PlaybackMode.InBackground)
         planeLocation += -1
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, false)
+        music.play(music.melodyPlayable(music.sonar), music.PlaybackMode.InBackground)
     } else if (planeLocation > 0) {
         listPlanes[planeLocation].setFlag(SpriteFlag.Invisible, true)
         planeLocation += -1
@@ -297,7 +297,6 @@ function maybeDropBomb (col: number) {
         listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, false)
     }
 }
-let bombCounter = 0
 let listBombCol: Sprite[] = []
 let listY: number[] = []
 let listX: number[] = []
@@ -305,6 +304,7 @@ let listPlanes: Sprite[] = []
 let listExplosion: Sprite[] = []
 let mySprite: Sprite = null
 let list: number[] = []
+let bombCounter = 0
 let listBombSet: Sprite[][] = []
 let listSpriteCol: Sprite[] = []
 let listUtil: Sprite[] = []
