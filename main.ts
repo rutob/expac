@@ -91,7 +91,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     setAllSpritesVisible(true)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (gameState == "playing" && playerLocation > 0) {
+    if (gameState == "playing" && playerLocation > 1) {
         listCars[playerLocation].setFlag(SpriteFlag.Invisible, true)
         playerLocation += -1
         listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
@@ -297,6 +297,7 @@ function maybeDropBomb (col: number) {
         listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, false)
     }
 }
+let listSpriteCol: Sprite[] = []
 let listBombCol: Sprite[] = []
 let listY: number[] = []
 let listX: number[] = []
@@ -304,9 +305,8 @@ let listPlanes: Sprite[] = []
 let listExplosion: Sprite[] = []
 let mySprite: Sprite = null
 let list: number[] = []
-let bombCounter = 0
 let listBombSet: Sprite[][] = []
-let listSpriteCol: Sprite[] = []
+let bombCounter = 0
 let listUtil: Sprite[] = []
 let listCars: Sprite[] = []
 let gameState = ""
@@ -447,9 +447,6 @@ setAllSpritesVisible(false)
 gameState = "playing"
 listCars[playerLocation].setFlag(SpriteFlag.Invisible, false)
 listUtil[1].setFlag(SpriteFlag.Invisible, false)
-listSpriteCol = listBombSet[0]
-sprites.setDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible", true)
-listSpriteCol[listSpriteCol.length - 1].setFlag(SpriteFlag.Invisible, !(sprites.readDataBoolean(listSpriteCol[listSpriteCol.length - 1], "visible")))
 game.onUpdateInterval(200, function () {
     updatePlane()
     updateBombSet()
